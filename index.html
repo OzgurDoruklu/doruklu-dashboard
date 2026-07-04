@@ -1,1 +1,307 @@
-Coming soon
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doruklu Sistem Analiz Paneli (Dashboard)</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.doruklu.com/style.css">
+    <style>
+        body { padding-top: 80px; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            background: var(--glass-bg);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--primary);
+            opacity: 0.8;
+        }
+        .stat-card.success::before { background: var(--success); }
+        .stat-card.danger::before { background: var(--danger); }
+        
+        .stat-icon {
+            width: 52px; height: 52px;
+            background: rgba(99, 102, 241, 0.1);
+            border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--primary);
+        }
+        .stat-card.success .stat-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        .stat-card.danger .stat-icon {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.1;
+            margin-top: 5px;
+        }
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Leaderboard and split layout */
+        .dashboard-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .dashboard-col {
+            flex: 1;
+            min-width: 320px;
+        }
+        
+        .panel-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Leaderboard List */
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            transition: all 0.3s;
+        }
+        .leaderboard-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--glass-border);
+            transform: translateX(5px);
+        }
+        .leaderboard-rank {
+            font-weight: 700;
+            font-size: 1.1rem;
+            width: 30px;
+            color: var(--text-secondary);
+        }
+        .leaderboard-rank.rank-1 { color: #f59e0b; }
+        .leaderboard-rank.rank-2 { color: #94a3b8; }
+        .leaderboard-rank.rank-3 { color: #b45309; }
+
+        .leaderboard-user {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+        .leaderboard-avatar {
+            width: 38px; height: 38px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        .leaderboard-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+        .leaderboard-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+        .leaderboard-score {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .section-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        /* Access check alert */
+        #alert-box { position: fixed; top: 80px; right: 20px; padding: 1rem 2rem; border-radius: 12px; color: white; z-index: 5000; }
+    </style>
+</head>
+<body>
+    <div id="alert-box" class="alert"></div>
+    <div id="loading-spinner" class="loading-overlay"><div class="spinner"></div></div>
+
+    <div id="dashboard-screen" class="screen">
+        <div class="dashboard-content">
+            
+            <!-- 1. Kişisel Özet Alanı -->
+            <span class="section-header">Profil & Kişisel Performans</span>
+            <div class="stats-grid">
+                <!-- Toplam Skor -->
+                <div class="stat-card">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Toplam Puanım</div>
+                        <div class="stat-value" id="user-score">-</div>
+                    </div>
+                </div>
+
+                <!-- Çözülen Oturum -->
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Tamamlanan Oyunlarım</div>
+                        <div class="stat-value" id="user-sessions">-</div>
+                    </div>
+                </div>
+
+                <!-- Ortalama Oturum Skoru -->
+                <div class="stat-card success">
+                    <div class="stat-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <div>
+                        <div class="stat-label">Ortalama Oturum Skoru</div>
+                        <div class="stat-value" id="user-avg-score">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Global İstatistik Alanı (Sadece Admin/Super Admin Görebilir) -->
+            <div id="admin-analytics-section" style="display: none; margin-top: 1rem;">
+                <span class="section-header">Global Sistem Analitiği</span>
+                <div class="stats-grid">
+                    <!-- Toplam Oyuncu -->
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">Toplam Kayıtlı Oyuncu</div>
+                            <div class="stat-value" id="global-players">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Toplam Flashcard -->
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5L4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5z"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">Toplam Aktif Flashcard</div>
+                            <div class="stat-value" id="global-flashcards">-</div>
+                        </div>
+                    </div>
+
+                    <!-- Toplam Oturum -->
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <div>
+                            <div class="stat-label">Toplam Oynanan Oyun</div>
+                            <div class="stat-value" id="global-sessions">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Liderlik Tablosu & Sistem Durumu -->
+            <div class="dashboard-row">
+                <!-- Liderlik Tablosu (En İyi 5 Oyuncu) -->
+                <div class="dashboard-col">
+                    <div class="panel-container">
+                        <div class="panel-title">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6M18 9h1.5a2.5 2.5 0 0 0 0-5H18M4 22h16M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34M12 2a4 4 0 0 1 4 4v7a4 4 0 0 1-4 4 4 4 0 0 1-4-4V6a4 4 0 0 1 4-4z"/></svg>
+                            Doruklu En İyi Oyuncular (Top 5)
+                        </div>
+                        <div class="leaderboard-list" id="leaderboard-container">
+                            <div style="color:var(--text-secondary); text-align:center; padding:20px;">Veriler yükleniyor...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sistem Durumu ve Versiyon -->
+                <div class="dashboard-col">
+                    <div class="panel-container" style="height: 100%; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div class="panel-title">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                                Sistem Bilgisi
+                            </div>
+                            <p style="color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-top: 0;">
+                                Doruklu Platformu SSO ve analiz sistemi aktif. Supabase API entegrasyonu ve tüm subdomainler arası Single Sign-On (SSO) mekanizmaları başarıyla çalışmaktadır.
+                            </p>
+                        </div>
+                        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem; margin-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); display: block;">Platform Versiyonu</span>
+                                <span style="font-weight: 700; color: var(--primary); font-size: 0.9rem;" id="version-text">-</span>
+                            </div>
+                            <div>
+                                <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); display: block; text-align: right;">Sistem Durumu</span>
+                                <span class="badge success" style="margin-top: 3px; display: inline-block;">AKTİF / ÇEVRİMİÇİ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script type="module" src="./js/auth.js"></script>
+</body>
+</html>
