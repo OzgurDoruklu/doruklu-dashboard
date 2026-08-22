@@ -1,6 +1,7 @@
 import { supabase, AppState, PLATFORM_VERSION } from 'https://cdn.doruklu.com/supabase-config.js';
 import { ui as globalUI } from 'https://cdn.doruklu.com/ui.js';
 import { initSubdomainAuth } from 'https://cdn.doruklu.com/auth.js';
+import { esc, safeImageUrl } from 'https://cdn.doruklu.com/util.js';
 
 export async function initAuth() {
     await initSubdomainAuth('doruklu_dashboard', async (user, profile) => {
@@ -66,12 +67,14 @@ export async function initAuth() {
             const container = document.getElementById('leaderboard-container');
             container.innerHTML = topPlayers.map((player, idx) => {
                 const rank = idx + 1;
-                const displayName = player.display_name || 'Gizemli Oyuncu';
-                const score = player.total_score || 0;
+                // display_name / avatar_url BAŞKA kullanıcıların kontrolünde — escape şart
+                const displayName = esc(player.display_name || 'Gizemli Oyuncu');
+                const score = Number(player.total_score) || 0;
+                const avatar = safeImageUrl(player.avatar_url);
                 let avatarHTML = '';
-                
-                if (player.avatar_url) {
-                    avatarHTML = `<img src="${player.avatar_url}" alt="${displayName}">`;
+
+                if (avatar) {
+                    avatarHTML = `<img src="${avatar}" alt="${displayName}">`;
                 } else {
                     const initial = displayName.charAt(0).toUpperCase();
                     avatarHTML = `<div style="width:100%; height:100%; background: linear-gradient(135deg, #6366f1, #a855f7); color:white; display:flex; align-items:center; justify-content:center; font-weight:bold; font-size:1rem;">${initial}</div>`;
