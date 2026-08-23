@@ -44,9 +44,11 @@ export async function initAuth() {
             document.getElementById('global-players').innerText = playersCount || 0;
 
             // Toplam Flashcard sayısı
+            // `*` yerine `id`: correct_answer artık client'a kapalı (K-05),
+            // yıldız genişlemesi yetkisiz sütuna denk gelip sorguyu düşürebilir.
             const { count: flashcardsCount } = await supabase
                 .from('flashcards')
-                .select('*', { count: 'exact', head: true });
+                .select('id', { count: 'exact', head: true });
             document.getElementById('global-flashcards').innerText = flashcardsCount || 0;
 
             // Toplam Oynanan Oyun sayısı
